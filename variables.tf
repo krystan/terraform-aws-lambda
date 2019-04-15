@@ -1,17 +1,36 @@
-variable "function_name" {
-  description = "A unique name for your Lambda function (and related IAM resources)"
-  type        = "string"
+variable "s3BucketName" {
+  type    = "string"
+  default = ""
 }
 
-variable "handler" {
-  description = "The function entrypoint in your code"
-  type        = "string"
+variable "lambda_function_name" {
+  type = "string"
 }
 
-variable "memory_size" {
-  description = "Amount of memory in MB your Lambda function can use at runtime"
-  type        = "string"
-  default     = 128
+variable "lambda_version" {
+  type = "string"
+}
+
+variable "lambda_code_filename" {
+  type = "string"
+}
+
+variable "lambda_runtime" {
+  type = "string"
+}
+
+variable "lambda_memory_size" {
+  type    = "string"
+  default = 128
+}
+
+variable "cloudwatch_log_retention_in_days" {
+  type    = "string"
+  default = 14
+}
+
+variable "lambda_handler" {
+  type = "string"
 }
 
 variable "reserved_concurrent_executions" {
@@ -20,56 +39,25 @@ variable "reserved_concurrent_executions" {
   default     = -1
 }
 
-variable "runtime" {
-  description = "The runtime environment for the Lambda function"
-  type        = "string"
+variable "description" {
+  type    = "string"
+  default = "Managed by Terraform"
 }
 
 variable "timeout" {
-  description = "The amount of time your Lambda function had to run in seconds"
-  type        = "string"
-  default     = 10
+  type    = "string"
+  default = 15
 }
 
-variable "source_path" {
-  description = "The source file or directory containing your Lambda source code"
-  type        = "string"
-}
-
-variable "build_command" {
-  description = "The command that creates the Lambda package zip file"
-  type        = "string"
-  default     = "python build.py '$filename' '$runtime' '$source'"
-}
-
-variable "build_paths" {
-  description = "The files or directories used by the build command, to trigger new Lambda package builds whenever build scripts change"
-  type        = "list"
-  default     = ["build.py"]
-}
-
-variable "description" {
-  description = "Description of what your Lambda function does"
-  type        = "string"
-  default     = "Managed by Terraform"
-}
-
-variable "environment" {
-  description = "Environment configuration for the Lambda function"
-  type        = "map"
-  default     = {}
+variable "attach_dead_letter_config" {
+  type    = "string"
+  default = false
 }
 
 variable "dead_letter_config" {
   description = "Dead letter configuration for the Lambda function"
   type        = "map"
   default     = {}
-}
-
-variable "attach_dead_letter_config" {
-  description = "Set this to true if using the dead_letter_config variable"
-  type        = "string"
-  default     = false
 }
 
 variable "vpc_config" {
@@ -84,16 +72,10 @@ variable "attach_vpc_config" {
   default     = false
 }
 
-variable "tags" {
-  description = "A mapping of tags"
-  type        = "map"
-  default     = {}
-}
-
-variable "policy" {
-  description = "An addional policy to attach to the Lambda function"
+variable "publish" {
+  description = "Whether to publish creation/change as new Lambda Function Version"
   type        = "string"
-  default     = ""
+  default     = false
 }
 
 variable "attach_policy" {
@@ -102,22 +84,33 @@ variable "attach_policy" {
   default     = false
 }
 
+variable "policy" {
+  description = "An addional policy to attach to the Lambda function"
+  type        = "string"
+  default     = ""
+}
+
 variable "enable_cloudwatch_logs" {
   description = "Set this to false to disable logging your Lambda output to CloudWatch Logs"
   type        = "string"
   default     = true
 }
 
-variable "publish" {
-  description = "Whether to publish creation/change as new Lambda Function Version"
-  type        = "string"
-  default     = false
-}
-
 variable "lambda_at_edge" {
   description = "Set this to true if using Lambda@Edge, to enable publishing, limit the timeout, and allow edgelambda.amazonaws.com to invoke the function"
   type        = "string"
   default     = false
+}
+
+variable "environmentmental_vars" {
+  description = "Environment configuration for the Lambda function"
+  type        = "map"
+  default     = {}
+}
+
+variable "tags" {
+  description = "Tags for resources"
+  default     = {}
 }
 
 locals {

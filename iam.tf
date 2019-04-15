@@ -1,5 +1,3 @@
-# Create the role.
-
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect  = "Allow"
@@ -12,17 +10,14 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-resource "aws_iam_role" "lambda" {
-  name               = "${var.function_name}"
+resource "aws_iam_role" "lambda-iam-role" {
+  name               = "${var.lambda_function_name}"
   assume_role_policy = "${data.aws_iam_policy_document.assume_role.json}"
-  tags               = "${var.tags}"
 }
 
-# Attach a policy for logs.
-
 locals {
-  lambda_log_group_arn      = "arn:${data.aws_partition.current.partition}:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.function_name}"
-  lambda_edge_log_group_arn = "arn:${data.aws_partition.current.partition}:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/us-east-1.${var.function_name}"
+  lambda_log_group_arn      = "arn:${data.aws_partition.current.partition}:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.lambda_function_name}"
+  lambda_edge_log_group_arn = "arn:${data.aws_partition.current.partition}:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/us-east-1.${var.lambda_function_name}"
   log_group_arns            = ["${slice(list(local.lambda_log_group_arn, local.lambda_edge_log_group_arn), 0, var.lambda_at_edge ? 2 : 1)}"]
 }
 
@@ -56,19 +51,63 @@ data "aws_iam_policy_document" "logs" {
 resource "aws_iam_policy" "logs" {
   count = "${var.enable_cloudwatch_logs ? 1 : 0}"
 
-  name   = "${var.function_name}-logs"
+  name   = "${var.lambda_function_name}-logs"
   policy = "${data.aws_iam_policy_document.logs.json}"
 }
 
 resource "aws_iam_policy_attachment" "logs" {
   count = "${var.enable_cloudwatch_logs ? 1 : 0}"
 
-  name       = "${var.function_name}-logs"
-  roles      = ["${aws_iam_role.lambda.name}"]
+  name       = "${var.lambda_function_name}-logs"
+  roles      = ["${aws_iam_role.lambda-iam-role.name}"]
   policy_arn = "${aws_iam_policy.logs.arn}"
 }
 
-# Attach an additional policy required for the dead letter config.
+data "aws_iam_policy_document" "network" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "network" {
+  count = "${var.attach_vpc_config ? 1 : 0}"
+
+  name   = "${var.lambda_function_name}-network"
+  policy = "${data.aws_iam_policy_document.network.json}"
+}
+
+resource "aws_iam_policy_attachment" "network" {
+  count = "${var.attach_vpc_config ? 1 : 0}"
+
+  name       = "${var.lambda_function_name}-network"
+  roles      = ["${aws_iam_role.lambda-iam-role.name}"]
+  policy_arn = "${aws_iam_policy.network.arn}"
+}
+
+resource "aws_iam_policy" "additional" {
+  count = "${var.attach_policy ? 1 : 0}"
+
+  name   = "${var.lambda_function_name}"
+  policy = "${var.policy}"
+}
+
+resource "aws_iam_policy_attachment" "additional" {
+  count = "${var.attach_policy ? 1 : 0}"
+
+  name       = "${var.lambda_function_name}"
+  roles      = ["${aws_iam_role.lambda-iam-role.name}"]
+  policy_arn = "${aws_iam_policy.additional.arn}"
+}
 
 data "aws_iam_policy_document" "dead_letter" {
   count = "${var.attach_dead_letter_config ? 1 : 0}"
@@ -90,64 +129,6 @@ data "aws_iam_policy_document" "dead_letter" {
 resource "aws_iam_policy" "dead_letter" {
   count = "${var.attach_dead_letter_config ? 1 : 0}"
 
-  name   = "${var.function_name}-dl"
+  name   = "${var.lambda_function_name}-dl"
   policy = "${data.aws_iam_policy_document.dead_letter.json}"
-}
-
-resource "aws_iam_policy_attachment" "dead_letter" {
-  count = "${var.attach_dead_letter_config ? 1 : 0}"
-
-  name       = "${var.function_name}-dl"
-  roles      = ["${aws_iam_role.lambda.name}"]
-  policy_arn = "${aws_iam_policy.dead_letter.arn}"
-}
-
-# Attach an additional policy required for the VPC config
-
-data "aws_iam_policy_document" "network" {
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-}
-
-resource "aws_iam_policy" "network" {
-  count = "${var.attach_vpc_config ? 1 : 0}"
-
-  name   = "${var.function_name}-network"
-  policy = "${data.aws_iam_policy_document.network.json}"
-}
-
-resource "aws_iam_policy_attachment" "network" {
-  count = "${var.attach_vpc_config ? 1 : 0}"
-
-  name       = "${var.function_name}-network"
-  roles      = ["${aws_iam_role.lambda.name}"]
-  policy_arn = "${aws_iam_policy.network.arn}"
-}
-
-# Attach an additional policy if provided.
-
-resource "aws_iam_policy" "additional" {
-  count = "${var.attach_policy ? 1 : 0}"
-
-  name   = "${var.function_name}"
-  policy = "${var.policy}"
-}
-
-resource "aws_iam_policy_attachment" "additional" {
-  count = "${var.attach_policy ? 1 : 0}"
-
-  name       = "${var.function_name}"
-  roles      = ["${aws_iam_role.lambda.name}"]
-  policy_arn = "${aws_iam_policy.additional.arn}"
 }
