@@ -92,3 +92,5 @@ function name unique per region, for example by setting
 | function\_qualified\_arn | The qualified ARN of the Lambda function |
 | role\_arn | The ARN of the IAM role created for the Lambda function |
 | role\_name | The name of the IAM role created for the Lambda function |
+| cloudwatch\_log\_group\_name| The name of the log group for cloudwatch if enabled |
+| cloudwatch\_log\_group\_arn| The arn of the log group for cloudwatch if enabled |
