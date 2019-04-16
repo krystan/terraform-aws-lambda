@@ -18,7 +18,7 @@ It expects that the function has already been deployed to amazon s3.
 
 ```js
 module "lambda" {
-  source = "github.com/claranet/terraform-aws-lambda"
+  source = "github.com/krystan/terraform-aws-lambda"
 
   lambda_function_name = "deployment-deploy-status"
   description          = "Deployment deploy status task"
