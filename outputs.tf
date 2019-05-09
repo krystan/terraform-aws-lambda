@@ -25,10 +25,10 @@ output "role_name" {
 
 output "cloudwatch_log_group_name" {
   description = "The name of the cludwatch_log_group"
-  value       = "${aws_cloudwatch_log_group.lambda.name}"
+  value       = "${aws_cloudwatch_log_group.lambda.*.name}"
 }
 
 output "cloudwatch_log_group_arn" {
   description = "The name of the cludwatch_log_group"
-  value       = "${aws_cloudwatch_log_group.lambda.arn}"
+  value       = "${aws_cloudwatch_log_group.lambda.*.arn}"
 }
