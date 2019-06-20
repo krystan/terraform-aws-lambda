@@ -3,6 +3,8 @@
 This Terraform module can be used for deploying a prepackaged lambda function and hides the ugly parts from you.
 It expects that the function has already been deployed to amazon s3.
 
+After version 11.4 this module supports HCL2 and will not work with versions of Terraform prior to 0.12
+
 ## Features
 
 * Only appears in the Terraform plan when there are legitimate changes.
@@ -29,26 +31,26 @@ module "lambda" {
 
   // Attach a policy.
   attach_policy = true
-  policy        = "${data.aws_iam_policy_document.lambda.json}"
+  policy        = data.aws_iam_policy_document.lambda.json
 
   // Add a dead letter queue.
   attach_dead_letter_config = true
   dead_letter_config {
-    target_arn = "${var.dead_letter_queue_arn}"
+    target_arn = var.dead_letter_queue_arn
   }
 
   // Add environment variables.
   environment {
     variables {
-      SLACK_URL = "${var.slack_url}"
+      SLACK_URL = var.slack_url
     }
   }
 
   // Deploy into a VPC.
   attach_vpc_config = true
   vpc_config {
-    subnet_ids         = ["${aws_subnet.test.id}"]
-    security_group_ids = ["${aws_security_group.test.id}"]
+    subnet_ids         = [aws_subnet.test.id]
+    security_group_ids = [aws_security_group.test.id]
   }
 }
 ```
