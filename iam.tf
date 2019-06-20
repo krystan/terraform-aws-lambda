@@ -20,11 +20,7 @@ resource "aws_iam_role" "lambda-iam-role" {
 locals {
   lambda_log_group_arn      = "arn:${data.aws_partition.current.partition}:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.lambda_function_name}"
   lambda_edge_log_group_arn = "arn:${data.aws_partition.current.partition}:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/us-east-1.${var.lambda_function_name}"
-  log_group_arns = [slice(
-    [local.lambda_log_group_arn, local.lambda_edge_log_group_arn],
-    0,
-    var.lambda_at_edge ? 2 : 1,
-  )]
+  log_group_arns = slice(list(local.lambda_log_group_arn, local.lambda_edge_log_group_arn], 0, var.lambda_at_edge ? 2 : 1)
 }
 
 data "aws_iam_policy_document" "logs" {
@@ -129,16 +125,8 @@ data "aws_iam_policy_document" "dead_letter" {
       "sqs:SendMessage",
     ]
 
-    # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
-    # force an interpolation expression to be interpreted as a list by wrapping it
-    # in an extra set of list brackets. That form was supported for compatibilty in
-    # v0.11, but is no longer supported in Terraform v0.12.
-    #
-    # If the expression in the following list itself returns a list, remove the
-    # brackets to avoid interpretation as a list of lists. If the expression
-    # returns a single list item then leave it as-is and remove this TODO comment.
     resources = [
-      lookup(var.dead_letter_config, "target_arn", ""),
+      var.dead_letter_config.target_arn,
     ]
   }
 }
