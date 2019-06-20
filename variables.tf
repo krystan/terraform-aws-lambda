@@ -49,11 +49,6 @@ variable "timeout" {
   default = 15
 }
 
-variable "attach_dead_letter_config" {
-  type    = string
-  default = false
-}
-
 variable "dead_letter_config" {
   description = "Dead letter configuration for the Lambda function"
   type        = map(string)

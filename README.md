@@ -30,11 +30,8 @@ module "lambda" {
   s3_bucket            = "youruniquebucketnamehere"
 
   // Attach a policy.
-  attach_policy = true
   policy        = data.aws_iam_policy_document.lambda.json
 
-  // Add a dead letter queue.
-  attach_dead_letter_config = true
   dead_letter_config {
     target_arn = var.dead_letter_queue_arn
   }
